@@ -14,7 +14,7 @@ contract MarketInteractions {
     address payable owner;
 
     IPoolAddressesProvider public immutable ADDRESS_PROVIDER;
-    IPooL public immutable POOL;
+    IPool public immutable POOL;
 
     address private immutable linkAddress = 0x07C725d58437504CA5f814AE406e70E21C5e8e9e;
     IERC20 private link;
@@ -23,7 +23,7 @@ contract MarketInteractions {
         ADDRESS_PROVIDER = IPoolAddressesProvider(_addressProvider);
         POOL = IPool(ADDRESS_PROVIDER.getPool());
         owner = payable(msg.sender);
-        link = ERC20(linkAddress);
+        link = IERC20(linkAddress);
     }
 
     function supplyLiquidity(address _tokenAddress, uint256 _amount) external {
@@ -57,6 +57,34 @@ contract MarketInteractions {
     {
         return POOL.getUserAccountData(_userAddress);
     }
+
+     function approveLINK(uint256 _amount, address _poolContractAddress)
+        external
+        returns (bool)
+    {
+        return link.approve(_poolContractAddress, _amount);
+    }
+
+    function allowanceLINK(address _poolContractAddress) external view returns (uint256) {
+        return link.allowance(address(this), _poolContractAddress);
+    }
+
+    function getBalance(address _tokenAddress) external view returns (uint256) {
+        return IERC20(_tokenAddress).balanceOf(address(this));
+    }
+
+    function withdraw(address _tokenAddress) external onlyOwner {
+        IERC20 token = IERC20 (_tokenAddress);
+        token.transfer(msg.sender, token.balanceOf(address(this)));
+    }
+
+    modifier onlyOwner {
+        require (msg.sender == owner,
+        "only owner can access this");
+        _;
+    }
+
+    receive() external payable {}
 
     
 
